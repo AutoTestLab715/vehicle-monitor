@@ -24,6 +24,10 @@ jobs:
             sleep 2
           done
           docker exec vehicle-mysql mysqladmin ping -h localhost -uroot -proot123 --silent
+          for i in $(seq 1 30); do
+            docker exec vehicle-mysql mysql -uroot -proot123 -e "SELECT 1" vehicle_monitor && break
+            sleep 2
+          done
           for i in $(seq 1 15); do
             nc -z 127.0.0.1 1883 && break
             sleep 1
@@ -44,26 +48,31 @@ jobs:
 
       - name: Write CI environment
         run: |
-          cat > server/local.env <<'EOF'
-          PORT=3000
-          DATABASE_URL=mysql+pymysql://vehicle:vehicle123@127.0.0.1:3306/vehicle_monitor?charset=utf8mb4
-          MQTT_BROKER=127.0.0.1
-          MQTT_PORT=1883
-          MQTT_TELEMETRY_TOPIC=vehicle/+/telemetry
-          MQTT_COMMAND_PREFIX=vehicle
-          EOF
+          printf '%s\n' \
+            'PORT=3000' \
+            'DATABASE_URL=mysql+pymysql://root:root123@127.0.0.1:3306/vehicle_monitor?charset=utf8mb4' \
+            'MQTT_BROKER=127.0.0.1' \
+            'MQTT_PORT=1883' \
+            'MQTT_TELEMETRY_TOPIC=vehicle/+/telemetry' \
+            'MQTT_COMMAND_PREFIX=vehicle' \
+            > server/local.env
+          cat server/local.env
 
       - name: Start Flask server
         run: |
           cd server
-          python run.py &
+          nohup python run.py > ../flask.log 2>&1 &
           echo $! > ../flask.pid
           cd ..
-          for i in $(seq 1 30); do
-            curl -sf http://127.0.0.1:3000/api/health && exit 0
+          for i in $(seq 1 45); do
+            if curl -sf http://127.0.0.1:3000/api/health; then
+              echo "Flask is ready"
+              exit 0
+            fi
             sleep 2
           done
-          echo "Flask failed to start"
+          echo "Flask failed to start. Log:"
+          cat flask.log || true
           exit 1
 
       - name: Install test dependencies
@@ -73,7 +82,7 @@ jobs:
         working-directory: tests
         env:
           API_BASE_URL: http://127.0.0.1:3000/api
-          DATABASE_URL: mysql+pymysql://vehicle:vehicle123@127.0.0.1:3306/vehicle_monitor?charset=utf8mb4
+          DATABASE_URL: mysql+pymysql://root:root123@127.0.0.1:3306/vehicle_monitor?charset=utf8mb4
           MQTT_BROKER: 127.0.0.1
           MQTT_PORT: 1883
         run: pytest -m "not fault" --tb=short
