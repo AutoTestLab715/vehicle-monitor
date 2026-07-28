@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main, master]
 
+env:
+  DATABASE_URL: mysql+pymysql://vehicle:vehicle123@127.0.0.1:3306/vehicle_monitor?charset=utf8mb4
+  API_BASE_URL: http://127.0.0.1:3000/api
+  MQTT_BROKER: 127.0.0.1
+  MQTT_PORT: 1883
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -25,7 +31,7 @@ jobs:
           done
           docker exec vehicle-mysql mysqladmin ping -h localhost -uroot -proot123 --silent
           for i in $(seq 1 30); do
-            docker exec vehicle-mysql mysql -uroot -proot123 -e "SELECT 1" vehicle_monitor && break
+            docker exec vehicle-mysql mysql -uvehicle -pvehicle123 -e "SELECT 1" vehicle_monitor && break
             sleep 2
           done
           for i in $(seq 1 15); do
@@ -46,22 +52,29 @@ jobs:
       - name: Install server dependencies
         run: pip install -r server/requirements.txt
 
-      - name: Write CI environment
+      - name: Verify host can reach MySQL
         run: |
-          printf '%s\n' \
-            'PORT=3000' \
-            'DATABASE_URL=mysql+pymysql://root:root123@127.0.0.1:3306/vehicle_monitor?charset=utf8mb4' \
-            'MQTT_BROKER=127.0.0.1' \
-            'MQTT_PORT=1883' \
-            'MQTT_TELEMETRY_TOPIC=vehicle/+/telemetry' \
-            'MQTT_COMMAND_PREFIX=vehicle' \
-            > server/local.env
-          cat server/local.env
+          python - <<'PY'
+          import os
+          import pymysql
+          from urllib.parse import urlparse, unquote
+          url = urlparse(os.environ['DATABASE_URL'].replace('mysql+pymysql://', 'mysql://'))
+          conn = pymysql.connect(
+              host=url.hostname,
+              port=url.port or 3306,
+              user=unquote(url.username or ''),
+              password=unquote(url.password or ''),
+              database=url.path.lstrip('/').split('?')[0],
+          )
+          conn.close()
+          print('MySQL host connection OK')
+          PY
 
       - name: Start Flask server
         run: |
           cd server
-          nohup python run.py > ../flask.log 2>&1 &
+          nohup env PORT=3000 DATABASE_URL="$DATABASE_URL" MQTT_BROKER="$MQTT_BROKER" MQTT_PORT="$MQTT_PORT" \
+            python -u run.py > ../flask.log 2>&1 &
           echo $! > ../flask.pid
           cd ..
           for i in $(seq 1 45); do
@@ -69,9 +82,14 @@ jobs:
               echo "Flask is ready"
               exit 0
             fi
+            if ! kill -0 "$(cat flask.pid)" 2>/dev/null; then
+              echo "Flask process exited early"
+              cat flask.log || true
+              exit 1
+            fi
             sleep 2
           done
-          echo "Flask failed to start. Log:"
+          echo "Flask health check timed out. Log:"
           cat flask.log || true
           exit 1
 
@@ -80,11 +98,6 @@ jobs:
 
       - name: Run pytest
         working-directory: tests
-        env:
-          API_BASE_URL: http://127.0.0.1:3000/api
-          DATABASE_URL: mysql+pymysql://root:root123@127.0.0.1:3306/vehicle_monitor?charset=utf8mb4
-          MQTT_BROKER: 127.0.0.1
-          MQTT_PORT: 1883
         run: pytest -m "not fault" --tb=short
 
       - name: Upload Allure results
@@ -94,6 +107,14 @@ jobs:
           name: allure-results
           path: tests/allure-results
           retention-days: 14
+
+      - name: Upload Flask log on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: flask-log
+          path: flask.log
+          retention-days: 7
 
       - name: Stop Flask server
         if: always()
