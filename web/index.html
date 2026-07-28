@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <meta name="theme-color" content="#0f172a">
+
+  <title>车载辅助监控系统</title>
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+
+</head>
+
+<body>
+
+  <div id="app">
+
+    <header class="header">
+
+      <div class="header-inner">
+
+        <h1>🚗 车载监控</h1>
+
+        <div class="status-badge" id="connStatus">
+
+          <span class="dot"></span>
+
+          <span>连接中...</span>
+
+        </div>
+
+      </div>
+
+    </header>
+
+
+
+    <main class="main">
+
+      <section class="card device-select">
+
+        <label for="deviceId">设备</label>
+
+        <select id="deviceId">
+
+          <option value="vehicle-001">vehicle-001</option>
+
+        </select>
+
+        <span class="online-tag" id="deviceOnline">离线</span>
+
+      </section>
+
+
+
+      <div class="alert-banner hidden" id="alertBanner">
+
+        <span id="alertText">预警信息</span>
+
+      </div>
+
+
+
+      <section class="grid-2">
+
+        <div class="card metric" id="cardDistance">
+
+          <div class="metric-icon">📏</div>
+
+          <div class="metric-value" id="valDistance">--</div>
+
+          <div class="metric-label">距离 (cm)</div>
+
+        </div>
+
+        <div class="card metric" id="cardTemp">
+
+          <div class="metric-icon">🌡️</div>
+
+          <div class="metric-value" id="valTemp">--</div>
+
+          <div class="metric-label">温度 (℃)</div>
+
+        </div>
+
+        <div class="card metric" id="cardHumidity">
+
+          <div class="metric-icon">💧</div>
+
+          <div class="metric-value" id="valHumidity">--</div>
+
+          <div class="metric-label">湿度 (%)</div>
+
+        </div>
+
+        <div class="card metric" id="cardSmoke">
+
+          <div class="metric-icon">🔥</div>
+
+          <div class="metric-value" id="valSmoke">--</div>
+
+          <div class="metric-label">烟雾 (ADC)</div>
+
+        </div>
+
+      </section>
+
+
+
+      <section class="card">
+
+        <h2>执行器控制</h2>
+
+        <div class="control-grid">
+
+          <button class="ctrl-btn" id="btnFan" data-action="fan">
+
+            <span class="ctrl-icon">🌀</span>
+
+            <span>风扇</span>
+
+            <span class="ctrl-state off">关</span>
+
+          </button>
+
+          <button class="ctrl-btn" id="btnAlarm" data-action="alarm">
+
+            <span class="ctrl-icon">🚨</span>
+
+            <span>声光警报</span>
+
+            <span class="ctrl-state off">关</span>
+
+          </button>
+
+          <button class="ctrl-btn" id="btnWindow" data-action="window">
+
+            <span class="ctrl-icon">🪟</span>
+
+            <span>车窗</span>
+
+            <span class="ctrl-state off">关</span>
+
+          </button>
+
+        </div>
+        <p class="control-hint">安全机制始终生效：危险时自动联动；手动关闭后约 1 秒若仍危险会重新触发。</p>
+
+      </section>
+
+
+
+      <section class="card">
+
+        <h2>系统信息</h2>
+
+        <ul class="info-list">
+
+          <li><span>最近语音指令</span><strong id="valVoice">--</strong></li>
+
+          <li><span>WiFi 信号</span><strong id="valRssi">-- dBm</strong></li>
+
+          <li><span>最后更新</span><strong id="valUpdated">--</strong></li>
+
+        </ul>
+
+      </section>
+
+
+
+      <section class="card chart-card">
+
+        <h2>传感器趋势</h2>
+
+        <div class="chart-tabs">
+
+          <button class="chart-tab active" data-chart="distance">距离</button>
+
+          <button class="chart-tab" data-chart="temperature">温度</button>
+
+          <button class="chart-tab" data-chart="humidity">湿度</button>
+
+        </div>
+
+        <canvas id="chartMain" height="120"></canvas>
+
+      </section>
+
+
+
+      <section class="card log-card">
+
+        <div class="log-tabs">
+
+          <button class="log-tab active" data-log="alarms">报警记录</button>
+
+          <button class="log-tab" data-log="operations">远程操作</button>
+
+          <button class="log-tab" data-log="voice">语音指令</button>
+
+        </div>
+
+        <ul class="log-list" id="logList"></ul>
+
+      </section>
+
+    </main>
+
+
+
+    <footer class="footer">
+
+      Flask + MySQL + MQTT + WebSocket · 车载辅助监控系统
+
+    </footer>
+
+  </div>
+
+
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+  <script src="js/app.js"></script>
+
+</body>
+
+</html>
+

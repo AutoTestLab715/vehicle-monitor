@@ -1,0 +1,22 @@
+{
+  "deviceId": "vehicle-001",
+  "distanceCm": 45.2,
+  "temperature": 26.5,
+  "humidity": 55,
+  "smokeRaw": 650,
+  "fan": false,
+  "alarm": false,
+  "windowOpen": false,
+  "autoMode": true,
+  "safetyActive": true,
+  "lastVoiceCmd": "",
+  "wifiRssi": -58,
+  "alerts": {
+    "distanceWarn": false,
+    "distanceDanger": false,
+    "tempWarn": false,
+    "humidityWarn": false,
+    "smokeWarn": false,
+    "smokeDanger": false
+  }
+}

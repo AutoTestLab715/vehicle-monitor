@@ -1,0 +1,270 @@
+{
+  "info": {
+    "_postman_id": "vehicle-monitor-api",
+    "name": "车载 IoT 监控系统 API",
+    "description": "ESP32 车载辅助监控系统 Flask REST API 集合，与 pytest 自动化用例对应。\n\n导入方式：Postman → Import → 选择本文件 + Local.postman_environment.json",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:3000/api" },
+    { "key": "deviceId", "value": "vehicle-001" }
+  ],
+  "item": [
+    {
+      "name": "01-冒烟测试",
+      "item": [
+        {
+          "name": "Health 健康检查",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "List Devices 设备列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/devices"
+          }
+        },
+        {
+          "name": "Get Device 不存在(404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/devices/not-exist-device"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02-遥测上报",
+      "item": [
+        {
+          "name": "Post Telemetry 正常上报",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"distanceCm\": 45.2,\n  \"temperature\": 26.5,\n  \"humidity\": 55,\n  \"smokeRaw\": 650,\n  \"fan\": false,\n  \"alarm\": false,\n  \"windowOpen\": false,\n  \"autoMode\": true,\n  \"safetyActive\": true,\n  \"lastVoiceCmd\": \"\",\n  \"wifiRssi\": -58,\n  \"alerts\": {\n    \"distanceWarn\": false,\n    \"distanceDanger\": false,\n    \"tempWarn\": false,\n    \"humidityWarn\": false,\n    \"smokeWarn\": false,\n    \"smokeDanger\": false\n  }\n}"
+            },
+            "url": "{{baseUrl}}/telemetry/{{deviceId}}"
+          }
+        },
+        {
+          "name": "Post Telemetry 危险场景",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"distanceCm\": 12,\n  \"temperature\": 37.5,\n  \"humidity\": 82,\n  \"smokeRaw\": 2900,\n  \"fan\": true,\n  \"alarm\": true,\n  \"windowOpen\": true,\n  \"alerts\": {\n    \"distanceWarn\": true,\n    \"distanceDanger\": true,\n    \"tempWarn\": true,\n    \"humidityWarn\": true,\n    \"smokeWarn\": true,\n    \"smokeDanger\": true\n  }\n}"
+            },
+            "url": "{{baseUrl}}/telemetry/{{deviceId}}"
+          }
+        },
+        {
+          "name": "Post Telemetry 空body(默认值)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{baseUrl}}/telemetry/{{deviceId}}"
+          }
+        },
+        {
+          "name": "Post Telemetry 非法温度(400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"temperature\": \"abc\"}" },
+            "url": "{{baseUrl}}/telemetry/{{deviceId}}"
+          }
+        },
+        {
+          "name": "Get Device 查询设备",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/devices/{{deviceId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03-远程控制",
+      "item": [
+        {
+          "name": "Control Fan 开启风扇",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"fan\",\n  \"value\": true,\n  \"source\": \"postman\",\n  \"operator\": \"tester\"\n}"
+            },
+            "url": "{{baseUrl}}/devices/{{deviceId}}/control"
+          }
+        },
+        {
+          "name": "Control Alarm 报警器",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"alarm\",\n  \"value\": true,\n  \"source\": \"postman\",\n  \"operator\": \"tester\"\n}"
+            },
+            "url": "{{baseUrl}}/devices/{{deviceId}}/control"
+          }
+        },
+        {
+          "name": "Control Window 车窗",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"window\",\n  \"value\": false,\n  \"source\": \"postman\",\n  \"operator\": \"tester\"\n}"
+            },
+            "url": "{{baseUrl}}/devices/{{deviceId}}/control"
+          }
+        },
+        {
+          "name": "Control 非法action(400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"abc\",\n  \"value\": true\n}"
+            },
+            "url": "{{baseUrl}}/devices/{{deviceId}}/control"
+          }
+        },
+        {
+          "name": "Poll Commands 轮询指令",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/commands/{{deviceId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04-报警与日志",
+      "item": [
+        {
+          "name": "List Alarms 报警记录",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alarms?deviceId={{deviceId}}&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["alarms"],
+              "query": [
+                { "key": "deviceId", "value": "{{deviceId}}" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Operations 远程操作",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/operations?deviceId={{deviceId}}&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["operations"],
+              "query": [
+                { "key": "deviceId", "value": "{{deviceId}}" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Voice Commands 语音指令",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voice-commands?deviceId={{deviceId}}&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["voice-commands"],
+              "query": [
+                { "key": "deviceId", "value": "{{deviceId}}" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05-历史数据",
+      "item": [
+        {
+          "name": "Sensor History 传感器历史",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/history/sensors?deviceId={{deviceId}}&limit=60",
+              "host": ["{{baseUrl}}"],
+              "path": ["history", "sensors"],
+              "query": [
+                { "key": "deviceId", "value": "{{deviceId}}" },
+                { "key": "limit", "value": "60" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Sensor History 缺deviceId(400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/history/sensors"
+          }
+        },
+        {
+          "name": "Sensor History 非法limit(400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/history/sensors?deviceId={{deviceId}}&limit=bad",
+              "host": ["{{baseUrl}}"],
+              "path": ["history", "sensors"],
+              "query": [
+                { "key": "deviceId", "value": "{{deviceId}}" },
+                { "key": "limit", "value": "bad" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "History Stats 数据统计",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/history/stats?deviceId={{deviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["history", "stats"],
+              "query": [{ "key": "deviceId", "value": "{{deviceId}}" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

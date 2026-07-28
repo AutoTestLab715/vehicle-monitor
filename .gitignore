@@ -1,0 +1,30 @@
+# Dependencies
+server/node_modules/
+server/.venv/
+tests/.venv/
+**/__pycache__/
+*.pyc
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+server/local.env
+server/.env
+
+# Test reports
+tests/allure-results/
+tests/allure-report/
+tests/.pytest_cache/
+

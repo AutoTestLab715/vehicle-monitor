@@ -1,0 +1,30 @@
+{
+
+  "name": "vehicle-monitor-server-legacy",
+
+  "version": "1.0.0",
+
+  "description": "[DEPRECATED] Use Flask backend: python run.py",
+
+  "main": "src/index.js",
+
+  "scripts": {
+
+    "start": "echo Deprecated. Use: cd server && python run.py && exit 1",
+
+    "legacy": "node src/index.js"
+
+  },
+
+  "dependencies": {
+
+    "cors": "^2.8.5",
+
+    "express": "^4.21.0",
+
+    "socket.io": "^4.7.5"
+
+  }
+
+}
+

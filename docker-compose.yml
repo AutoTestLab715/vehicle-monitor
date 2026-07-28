@@ -1,0 +1,24 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: vehicle-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: vehicle_monitor
+      MYSQL_USER: vehicle
+      MYSQL_PASSWORD: vehicle123
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./server/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: vehicle-mqtt
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
