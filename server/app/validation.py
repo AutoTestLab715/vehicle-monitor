@@ -27,6 +27,23 @@ def parse_int(value, field: str, default: int = 0) -> int:
         raise ValidationError(f'{field} must be an integer', field) from exc
 
 
+def parse_bool(value, field: str, default: bool = False) -> bool:
+    """Parse boolean values consistently; bool('false') must not become True."""
+    if value is None or value == '':
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and value in (0, 1):
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {'true', '1', 'yes', 'on'}:
+            return True
+        if normalized in {'false', '0', 'no', 'off'}:
+            return False
+    raise ValidationError(f'{field} must be a boolean', field)
+
+
 def parse_limit(value, default: int, max_limit: int) -> int:
     if value is None:
         return default
@@ -52,11 +69,11 @@ def normalize_telemetry_body(body: dict) -> dict:
         'temperature': parse_float(body.get('temperature'), 'temperature'),
         'humidity': parse_float(body.get('humidity'), 'humidity'),
         'smokeRaw': parse_int(body.get('smokeRaw'), 'smokeRaw'),
-        'fan': bool(body.get('fan', False)),
-        'alarm': bool(body.get('alarm', False)),
-        'windowOpen': bool(body.get('windowOpen', False)),
-        'autoMode': body.get('autoMode', True) is not False,
-        'safetyActive': body.get('safetyActive', True) is not False,
+        'fan': parse_bool(body.get('fan'), 'fan', False),
+        'alarm': parse_bool(body.get('alarm'), 'alarm', False),
+        'windowOpen': parse_bool(body.get('windowOpen'), 'windowOpen', False),
+        'autoMode': parse_bool(body.get('autoMode'), 'autoMode', True),
+        'safetyActive': parse_bool(body.get('safetyActive'), 'safetyActive', True),
         'lastVoiceCmd': voice_cmd or '',
         'wifiRssi': parse_int(body.get('wifiRssi'), 'wifiRssi'),
         'alerts': body.get('alerts') or {},
